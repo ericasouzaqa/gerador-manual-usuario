@@ -1,29 +1,44 @@
 /**
- * UX mínimo: duas telas e uma ação principal. O usuário lê os arquivos,
- * cria o manual no topo e revisa o resultado. Nada além disso aparece.
+ * UX mínimo: duas telas e uma ação principal. A leitura e a criação do manual
+ * acontecem localmente no navegador, sem API externa.
  */
 import { useState } from "react";
-import { BookOpen, Check, FileText, Plus, Upload } from "lucide-react";
+import { Check, FileText, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-
-const initialFiles = ["Manual de operações v3.pdf", "Fluxo de alertas.xlsx"];
+import {
+  createManual,
+  LocalDocument,
+  readDocument,
+} from "@/lib/document-reader";
 
 export default function Home() {
   const [screen, setScreen] = useState<"ler" | "manual">("ler");
-  const [files, setFiles] = useState(initialFiles);
-  const [manualCreated, setManualCreated] = useState(false);
+  const [documents, setDocuments] = useState<LocalDocument[]>([]);
+  const [manual, setManual] = useState("");
+  const [reading, setReading] = useState(false);
 
-  function addFiles(event: React.ChangeEvent<HTMLInputElement>) {
-    const names = Array.from(event.target.files ?? []).map(file => file.name);
-    if (!names.length) return;
-    setFiles(current => [...names, ...current]);
-    toast.success("Arquivo adicionado");
+  async function addFiles(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
+    setReading(true);
+    const results = await Promise.all(files.map(readDocument));
+    setDocuments(current => [...current, ...results]);
+    setReading(false);
+    toast.success(
+      `${results.length} arquivo${results.length > 1 ? "s" : ""} lido${results.length > 1 ? "s" : ""} localmente`
+    );
+    event.target.value = "";
   }
 
-  function createManual() {
-    setManualCreated(true);
+  function create() {
+    if (!documents.length) {
+      toast.error("Adicione um documento primeiro");
+      setScreen("ler");
+      return;
+    }
+    setManual(createManual(documents));
     setScreen("manual");
   }
 
@@ -32,7 +47,7 @@ export default function Home() {
       <header className="topbar">
         <div className="brand">
           <img src="/manus-storage/arquivo-campo-mark_6fa76ed8.png" alt="" />
-          <strong>Arquivo de Campo</strong>
+          <strong>Gerador de Manual do Usuário</strong>
         </div>
         <nav className="tabs" aria-label="Telas">
           <button
@@ -48,47 +63,70 @@ export default function Home() {
             Manual
           </button>
         </nav>
-        <Button className="create-button" onClick={createManual}>
+        <Button className="create-button" onClick={create}>
           <Plus size={15} /> Criar manual
         </Button>
       </header>
-
       <main className="page">
         {screen === "ler" ? (
           <section className="screen">
             <div className="screen-heading">
               <div>
                 <h1>Ler documentos</h1>
-                <p>Adicione os arquivos que devem ser usados no manual.</p>
+                <p>Adicione os arquivos usados no manual.</p>
               </div>
               <label className="upload-button">
                 <Upload size={15} /> Adicionar arquivo
                 <input
                   type="file"
                   multiple
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt"
+                  accept=".pdf,.txt"
                   onChange={addFiles}
                 />
               </label>
             </div>
             <div className="file-panel">
-              {files.map(file => (
-                <div className="file-row" key={file}>
+              {!documents.length && (
+                <div className="empty-panel">
+                  <FileText size={22} />
+                  <p>Nenhum documento adicionado.</p>
+                  <span>Formatos disponíveis: PDF e TXT.</span>
+                </div>
+              )}
+              {documents.map(document => (
+                <div className="file-row" key={document.id}>
                   <div className="file-symbol">
                     <FileText size={17} />
                   </div>
                   <div>
-                    <strong>{file}</strong>
-                    <span>
-                      <Check size={12} /> Arquivo disponível neste dispositivo
+                    <strong>{document.name}</strong>
+                    <span
+                      className={
+                        document.status === "lido" ? "file-ok" : "file-warning"
+                      }
+                    >
+                      {document.status === "lido" ? (
+                        <>
+                          <Check size={12} /> Texto lido neste dispositivo
+                        </>
+                      ) : (
+                        document.message
+                      )}
                     </span>
                   </div>
                 </div>
               ))}
-              <Separator />
-              <p className="read-status">
-                <span /> {files.length} arquivos prontos para leitura
-              </p>
+              {documents.length > 0 && (
+                <>
+                  <Separator />
+                  <p className="read-status">
+                    <span />{" "}
+                    {reading
+                      ? "Lendo arquivos..."
+                      : `${documents.length} arquivo${documents.length > 1 ? "s" : ""} pronto${documents.length > 1 ? "s" : ""} para criar o manual`}
+                  </p>
+                </>
+              )}
             </div>
           </section>
         ) : (
@@ -96,28 +134,23 @@ export default function Home() {
             <div className="screen-heading">
               <div>
                 <h1>Manual</h1>
-                <p>Revise o conteúdo antes de usar.</p>
+                <p>Revise e edite o conteúdo antes de usar.</p>
               </div>
             </div>
             <article className="manual">
-              <p className="manual-label">MANUAL DE OPERAÇÃO</p>
-              <h2>
-                {manualCreated
-                  ? "Manual criado a partir dos documentos"
-                  : "Manual em branco"}
-              </h2>
-              <label htmlFor="manual-content">Conteúdo</label>
+              <label htmlFor="manual-content">Conteúdo do manual</label>
               <textarea
                 id="manual-content"
-                defaultValue={
-                  manualCreated
-                    ? "O que é?\n\nDescreva a funcionalidade com base nos documentos lidos.\n\nComo utilizar\n\n1. Consulte os documentos de origem.\n2. Revise as informações encontradas.\n3. Ajuste este conteúdo antes de finalizar."
-                    : "Escreva o conteúdo do manual aqui."
-                }
+                value={manual}
+                onChange={event => setManual(event.target.value)}
+                placeholder="Clique em Criar manual para gerar o conteúdo a partir dos documentos lidos."
               />
-              <p className="manual-note">
-                O conteúdo pode ser editado antes da versão final.
-              </p>
+              {manual && (
+                <p className="manual-note">
+                  O texto foi criado somente com as informações encontradas nos
+                  arquivos locais.
+                </p>
+              )}
             </article>
           </section>
         )}

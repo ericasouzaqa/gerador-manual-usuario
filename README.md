@@ -1,6 +1,6 @@
-# Arquivo de Campo
+# Gerador de Manual do Usuário
 
-Plataforma local-first para organizar documentação de produto, evidências, gaps e manuais operacionais.
+Aplicação local-first para ler documentos e criar manuais de usuário revisáveis.
 
 ## Princípio técnico
 
