@@ -1,43 +1,45 @@
 # Gerador de Manual do Usuário
 
-Aplicação local-first para ler documentos e criar manuais de usuário revisáveis.
+Aplicação local para ler documentos e criar um manual editável.
 
-## Princípio técnico
+## O que faz
 
-A primeira versão **não consome API de inteligência artificial**. O frontend funciona no navegador, mantém o estado no dispositivo e foi estruturado para que a futura leitura real de documentos e qualquer automação local possam ser adicionadas por módulos independentes, sem acoplar a interface a um fornecedor.
+O usuário adiciona arquivos, lê o conteúdo neste dispositivo e clica em **Criar manual**. O sistema monta um texto inicial usando apenas o conteúdo encontrado nos arquivos. O manual pode ser revisado e editado antes do uso.
 
-A pasta `desktop/` contém o shell para computador. Ele reutiliza o build da aplicação web com isolamento de contexto, `nodeIntegration` desativado, sandbox habilitado e um bridge mínimo. Isso preserva uma única experiência visual e reduz duplicação de código.
+## Formatos
 
-## Executar a versão web
+PDF, TXT, DOCX, XLSX e XLS têm leitura de texto ou dados. PNG, JPG, JPEG e WEBP são registrados como arquivos visuais e ficam marcados para conferência manual. Outros formatos são informados como não suportados.
+
+## Privacidade
+
+Não há chamada para API externa de inteligência artificial. Os arquivos são processados no navegador e não são enviados automaticamente para serviços externos.
+
+## Rodar a versão web
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Para validar a compilação:
+Verificar a aplicação:
 
 ```bash
 pnpm check
+pnpm exec vitest run client/src/lib/document-reader.test.ts --run
 pnpm build
 ```
 
-## Executar a versão para computador
+## Rodar a versão para computador
 
-Depois de gerar o build web, instale as dependências da pasta `desktop/` e inicie o shell:
+A pasta `desktop/` contém o shell Electron que abre o mesmo build local da aplicação web.
 
 ```bash
+pnpm build
 cd desktop
 pnpm install
 pnpm start
 ```
 
-## Escopo atual
+## Limites atuais
 
-O protótipo demonstra o fluxo de trabalho, upload local, busca de funcionalidade, estados de confirmação/revisão/gap, documentos recentes, evidências, progresso de revisão e marcação de aprovação humana.
-
-A leitura efetiva de PDF, Word, Excel, imagens e OCR local deve entrar em um próximo módulo testado isoladamente. Não deve ser simulada como se já estivesse concluída.
-
-## Segurança e manutenção
-
-Não adicionar chamadas remotas de IA ou envio automático de documentos. Qualquer novo recurso nativo do desktop deverá entrar pelo preload com uma interface pequena e revisada. O domínio deve permanecer independente da camada visual para permitir evolução por muitos anos sem reescrever a experiência.
+A criação do manual é determinística. Ela não interpreta intenção, não cria regras e não preenche informações ausentes. Imagens são registradas, mas o texto delas ainda precisa ser conferido manualmente.

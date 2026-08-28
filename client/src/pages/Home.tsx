@@ -80,7 +80,7 @@ export default function Home() {
                 <input
                   type="file"
                   multiple
-                  accept=".pdf,.txt"
+                  accept=".pdf,.txt,.docx,.xlsx,.xls,.png,.jpg,.jpeg,.webp"
                   onChange={addFiles}
                 />
               </label>
@@ -90,7 +90,10 @@ export default function Home() {
                 <div className="empty-panel">
                   <FileText size={22} />
                   <p>Nenhum documento adicionado.</p>
-                  <span>Formatos disponíveis: PDF e TXT.</span>
+                  <span>
+                    Formatos disponíveis: PDF, TXT, DOCX e XLSX. Imagens são
+                    registradas para conferência.
+                  </span>
                 </div>
               )}
               {documents.map(document => (
