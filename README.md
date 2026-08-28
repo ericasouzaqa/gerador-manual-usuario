@@ -1,45 +1,40 @@
 # Gerador de Manual do Usuário
 
-Aplicação local para ler documentos e criar um manual editável.
+Aplicação local para transformar documentos de produto em conhecimento revisável, cenários de teste e manual do usuário.
 
-## O que faz
+## Fluxo
 
-O usuário adiciona arquivos, lê o conteúdo neste dispositivo e clica em **Criar manual**. O sistema monta um texto inicial usando apenas o conteúdo encontrado nos arquivos. O manual pode ser revisado e editado antes do uso.
+1. **Fonte**: adicione os arquivos.
+2. **Entrega**: defina o agrupamento do trabalho.
+3. **Conhecimento**: revise funcionalidade, uso, regras e gaps.
+4. **STEP**: revise os passos identificados.
+5. **Gherkin**: copie os cenários para a ferramenta de QA.
+6. **Manual**: edite, copie ou exporte o conteúdo.
 
-## Formatos
+## Fidelidade
 
-PDF, TXT, DOCX, XLSX e XLS têm leitura de texto ou dados. PNG, JPG, JPEG e WEBP são registrados como arquivos visuais e ficam marcados para conferência manual. Outros formatos são informados como não suportados.
+O sistema trabalha somente com o conteúdo encontrado nos arquivos. Cada evidência mantém o nome da fonte e, quando disponível, a página. Texto não identificado, imagem sem leitura e interpretação incompleta são registrados como gap. A aplicação não cria telas, campos, regras, ações ou resultados que não estejam na fonte.
 
-## Privacidade
+## Formatos locais
 
-Não há chamada para API externa de inteligência artificial. Os arquivos são processados no navegador e não são enviados automaticamente para serviços externos.
+PDF com texto, TXT, DOCX, XLSX e XLS são lidos localmente. Imagens e PDFs sem texto selecionável são preservados como fonte visual e marcados para conferência. OCR automático não está ativo nesta versão.
 
-## Rodar a versão web
+## Privacidade e independência
+
+Não há chamada para API externa de inteligência artificial. O processamento ocorre no navegador. A versão desktop reutiliza o mesmo build local e não exige serviço remoto obrigatório.
+
+## Desenvolvimento
 
 ```bash
 pnpm install
 pnpm dev
-```
-
-Verificar a aplicação:
-
-```bash
+pnpm test
 pnpm check
-pnpm exec vitest run client/src/lib/document-reader.test.ts --run
 pnpm build
 ```
 
-## Rodar a versão para computador
+A pasta `desktop/` contém o shell local para computador. O PDF é obtido pelo diálogo de impressão do sistema. O Word é exportado em formato compatível com `.doc`.
 
-A pasta `desktop/` contém o shell Electron que abre o mesmo build local da aplicação web.
+## Limites conhecidos
 
-```bash
-pnpm build
-cd desktop
-pnpm install
-pnpm start
-```
-
-## Limites atuais
-
-A criação do manual é determinística. Ela não interpreta intenção, não cria regras e não preenche informações ausentes. Imagens são registradas, mas o texto delas ainda precisa ser conferido manualmente.
+A análise é baseada em regras determinísticas. Ela organiza evidências e aponta ausência de informação, mas não substitui revisão humana. A aplicação ainda não interpreta OCR de imagens e PDF escaneado, não preserva layout visual completo de documentos e não oferece comparação avançada entre versões.

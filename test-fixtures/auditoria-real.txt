@@ -1,0 +1,184 @@
+Entendido. Com base no parecer da auditoria, a primeira versão não deve ser considerada concluída.
+
+A evolução agora deve priorizar o objetivo real do produto: criar um Gerador de Manual do Usuário que transforme documentos técnicos e de implementação em uma documentação clara, didática e útil para o usuário final.
+
+Não quero apenas um leitor de PDF ou um resumo automático de texto. A aplicação precisa primeiro entender o conteúdo e depois gerar o manual.
+
+Refatore seguindo estas prioridades:
+
+1. Corrigir o fluxo principal da aplicação
+
+O fluxo deve ser:
+
+Documento enviado
+→ Leitura completa dos artefatos
+→ Análise do conhecimento extraído
+→ Revisão do entendimento
+→ Geração do Manual do Usuário
+→ Edição e exportação
+
+Não gerar o manual diretamente após a leitura. Deve existir uma etapa intermediária de análise para reduzir interpretações incorretas.
+
+2. Evoluir a leitura dos documentos
+
+A aplicação deve trabalhar com:
+
+- PDF com texto.
+- PDF escaneado.
+- Imagens.
+- Tabelas.
+- Word.
+- Excel.
+- Documentos desformatados.
+- Fluxos e protótipos.
+
+Durante a leitura, preservar:
+
+- Texto original.
+- Estrutura.
+- Origem da informação.
+- Página ou seção.
+- Relação entre tabelas, imagens e textos.
+
+Quando não conseguir interpretar algo com segurança, não preencher automaticamente. Registrar como lacuna.
+
+3. Criar uma camada de conhecimento antes do manual
+
+Antes da geração final, apresentar o entendimento identificado:
+
+- Nome da funcionalidade.
+- O que é.
+- Para que serve.
+- Quem utiliza.
+- Qual problema resolve.
+- Como é utilizada.
+- Quais ações existem.
+- Regras identificadas.
+- Pontos de atenção.
+- Gaps e indefinições.
+
+Essa etapa deve permitir revisão humana antes da publicação.
+
+4. Ajustar o objetivo do manual
+
+O manual deve ensinar alguém que nunca viu o sistema.
+
+Ele deve responder:
+
+- O que é essa funcionalidade?
+- Por que ela existe?
+- Quem usa?
+- Quando devo usar?
+- Como acesso?
+- Como faço no sistema?
+- O que acontece depois?
+- Como essa funcionalidade ajuda a operação?
+
+A linguagem deve ser simples, didática e contextualizada.
+
+Não quero uma documentação técnica. Quero uma documentação de aprendizado.
+
+5. Fidelidade ao documento
+
+Manter como regra absoluta:
+
+- Não inventar telas.
+- Não inventar campos.
+- Não inventar botões.
+- Não inventar regras de negócio.
+- Não assumir comportamentos.
+- Não transformar exemplo em regra.
+- Não completar informações ausentes.
+
+Os nomes de menus, campos e botões devem ser exatamente os mesmos da documentação.
+
+6. Uso de contexto externo
+
+Se necessário, pode pesquisar conceitos gerais do domínio para explicar termos ao usuário.
+
+Exemplo:
+Explicar o conceito de cerca geográfica em recuperação veicular.
+
+Porém:
+
+Não usar pesquisa externa para definir como o sistema funciona.
+
+A pesquisa deve explicar contexto, nunca complementar ou alterar a implementação.
+
+7. Melhorar a experiência do usuário
+
+A aplicação deve ser simples.
+
+Priorizar:
+
+- Poucas telas.
+- Fluxo claro.
+- Baixa carga cognitiva.
+- Boa organização visual.
+- Facilidade para encontrar informações.
+
+O foco principal deve ser:
+
+Carregar documento
+→ Entender
+→ Gerar manual
+→ Revisar
+→ Exportar
+
+Remover qualquer funcionalidade que não ajude diretamente nesse objetivo.
+
+8. Arquitetura
+
+Revisar a arquitetura para manter separação clara:
+
+- Interface.
+- Processamento de arquivos.
+- Extração de conteúdo.
+- Análise do conhecimento.
+- Geração do manual.
+- Exportação.
+- Persistência.
+
+Evitar dependências desnecessárias e manter o sistema preparado para execução local.
+
+9. Saídas do sistema
+
+Incluir:
+
+- Manual editável.
+- Exportação para PDF.
+- Exportação para Word.
+- Histórico de versões.
+- Comparação entre versões quando possível.
+- Identificação dos gaps encontrados.
+
+10. Validação real
+
+Antes de considerar concluído, validar com documentos reais:
+
+- PDF organizado.
+- PDF com tabelas.
+- PDF com imagens.
+- PDF escaneado.
+- Documento desformatado.
+- Documento com múltiplas funcionalidades.
+
+A validação não deve verificar apenas se o programa abre ou compila.
+
+Deve validar se:
+
+- O conteúdo está fiel.
+- O usuário novo entende a funcionalidade.
+- O contexto faz sentido.
+- O manual agrega valor operacional.
+- As lacunas foram preservadas.
+- Não houve criação de informações inexistentes.
+
+Ao finalizar, apresente:
+
+1. O que foi corrigido.
+2. O que foi removido.
+3. O que foi acrescentado.
+4. Quais limitações permanecem.
+5. Quais testes reais foram executados.
+6. Qual o nível de confiança da entrega.

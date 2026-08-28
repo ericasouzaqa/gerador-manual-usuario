@@ -1,19 +1,34 @@
 /**
- * Leitura local e determinística. Nenhum arquivo é enviado para fora do
- * dispositivo. O módulo retorna o texto encontrado e informa as lacunas.
+ * Leitura local e preservação. O módulo não completa informações ausentes.
  */
-export type LocalDocument = {
-  id: string;
-  name: string;
-  format: string;
-  status: "lido" | "visual" | "não suportado" | "erro";
-  text: string;
-  pages?: number;
-  message?: string;
-};
+import { Evidence, SourceDocument } from "./workflow-model";
 
 function getFormat(name: string) {
   return name.split(".").pop()?.toLowerCase() ?? "arquivo";
+}
+
+function makeEvidence(
+  sourceId: string,
+  sourceName: string,
+  text: string,
+  page?: number
+): Evidence[] {
+  return text
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map((content, index) => ({
+      id: `${sourceId}-e${page ?? 0}-${index}`,
+      sourceId,
+      sourceName,
+      kind:
+        content.includes("\t") || content.includes(";") || content.includes(",")
+          ? "tabela"
+          : "texto",
+      content,
+      page,
+      preview: content.slice(0, 180),
+    }));
 }
 
 async function readPdf(file: File) {
@@ -36,80 +51,80 @@ async function readPdf(file: File) {
         .trim()
     );
   }
-  return { text: pages.filter(Boolean).join("\n\n"), pages: pdf.numPages };
+  return { pages, text: pages.join("\n\n") };
 }
 
 async function readDocx(file: File) {
   const mammoth = await import("mammoth");
-  const result = await mammoth.extractRawText({
-    arrayBuffer: await file.arrayBuffer(),
-  });
-  return { text: result.value };
+  return (
+    await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
+  ).value;
 }
 
 async function readXlsx(file: File) {
   const XLSX = await import("xlsx");
   const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-  const sheets = workbook.SheetNames.map(
+  return workbook.SheetNames.map(
     name => `Aba: ${name}\n${XLSX.utils.sheet_to_csv(workbook.Sheets[name])}`
-  );
-  return { text: sheets.join("\n\n") };
+  ).join("\n\n");
 }
 
-function resultWithText(
-  id: string,
-  name: string,
-  format: string,
+function buildSource(
+  file: File,
   text: string,
-  extra: Partial<LocalDocument> = {}
-): LocalDocument {
+  message?: string,
+  pages?: string[]
+): SourceDocument {
+  const id = `${file.name}-${file.lastModified}-${file.size}`;
+  const format = getFormat(file.name);
+  const evidence = pages
+    ? pages.flatMap((pageText, index) =>
+        makeEvidence(id, file.name, pageText, index + 1)
+      )
+    : makeEvidence(id, file.name, text);
   return {
     id,
-    name,
+    name: file.name,
     format,
-    status: text.trim() ? "lido" : "erro",
-    text,
-    ...extra,
+    status: text.trim() ? "lido" : "parcial",
+    rawText: text,
+    evidence,
+    previewUrl:
+      file.type.startsWith("image/") &&
+      typeof URL.createObjectURL === "function"
+        ? URL.createObjectURL(file)
+        : undefined,
     message: text.trim()
-      ? undefined
-      : (extra.message ?? "Nenhum texto foi encontrado."),
+      ? message
+      : (message ?? "Nenhum texto foi extraído com segurança."),
   };
 }
 
-export async function readDocument(file: File): Promise<LocalDocument> {
-  const format = getFormat(file.name);
+export async function readDocument(file: File): Promise<SourceDocument> {
   const id = `${file.name}-${file.lastModified}-${file.size}`;
+  const format = getFormat(file.name);
   try {
     if (format === "txt" || file.type === "text/plain")
-      return resultWithText(id, file.name, format, await file.text());
+      return buildSource(file, await file.text());
     if (format === "pdf" || file.type === "application/pdf") {
       const result = await readPdf(file);
-      return resultWithText(id, file.name, format, result.text, {
-        pages: result.pages,
-        message: "O PDF não contém texto selecionável.",
-      });
+      return buildSource(
+        file,
+        result.text,
+        result.text
+          ? undefined
+          : "PDF sem texto selecionável. Conteúdo visual preservado como lacuna.",
+        result.pages
+      );
     }
     if (format === "docx" || file.type.includes("wordprocessingml"))
-      return resultWithText(
-        id,
-        file.name,
-        format,
-        (await readDocx(file)).text,
-        { message: "O documento não contém texto." }
-      );
+      return buildSource(file, await readDocx(file));
     if (
-      format === "xlsx" ||
-      format === "xls" ||
+      ["xlsx", "xls"].includes(format) ||
       file.type.includes("spreadsheet") ||
       file.type.includes("excel")
     )
-      return resultWithText(
-        id,
-        file.name,
-        format,
-        (await readXlsx(file)).text,
-        { message: "A planilha não contém dados." }
-      );
+      return buildSource(file, await readXlsx(file));
     if (
       ["png", "jpg", "jpeg", "webp", "gif"].includes(format) ||
       file.type.startsWith("image/")
@@ -118,18 +133,24 @@ export async function readDocument(file: File): Promise<LocalDocument> {
         id,
         name: file.name,
         format,
-        status: "visual",
-        text: "",
+        status: "parcial",
+        rawText: "",
+        evidence: [],
+        previewUrl:
+          typeof URL.createObjectURL === "function"
+            ? URL.createObjectURL(file)
+            : undefined,
         message:
-          "Imagem registrada. O texto precisa ser conferido manualmente.",
+          "Imagem preservada. Texto e estrutura precisam de conferência manual.",
       };
     return {
       id,
       name: file.name,
       format,
-      status: "não suportado",
-      text: "",
-      message: "Formato não suportado nesta versão.",
+      status: "erro",
+      rawText: "",
+      evidence: [],
+      message: "Formato não suportado.",
     };
   } catch {
     return {
@@ -137,37 +158,9 @@ export async function readDocument(file: File): Promise<LocalDocument> {
       name: file.name,
       format,
       status: "erro",
-      text: "",
-      message: "Não foi possível ler este arquivo neste dispositivo.",
+      rawText: "",
+      evidence: [],
+      message: "Falha na leitura local. O arquivo não foi interpretado.",
     };
   }
-}
-
-function firstHeading(text: string) {
-  return (
-    text
-      .split(/\r?\n/)
-      .map(line => line.trim())
-      .find(Boolean) ?? "Manual do usuário"
-  );
-}
-
-export function createManual(documents: LocalDocument[]) {
-  const readable = documents.filter(
-    document => document.status === "lido" && document.text.trim()
-  );
-  const gaps = documents.filter(
-    document => document.status !== "lido" || !document.text.trim()
-  );
-  const sourceNames = documents.map(document => document.name).join(", ");
-  const title = readable.length
-    ? firstHeading(readable[0].text)
-    : "Manual do usuário";
-  const excerpts = readable
-    .map(document => `Fonte: ${document.name}\n\n${document.text.trim()}`)
-    .join("\n\n---\n\n");
-  const gapText = gaps.length
-    ? `\n\n## Pontos não lidos\n\n${gaps.map(document => `- ${document.name}: ${document.message ?? "informação não encontrada"}`).join("\n")}`
-    : "";
-  return `# ${title}\n\n## Sobre esta versão\n\nEste manual foi criado a partir dos arquivos: ${sourceNames || "nenhum arquivo"}. Revise o conteúdo antes de usar.\n\n## Conteúdo encontrado\n\n${excerpts || "Nenhum texto foi identificado nos documentos lidos."}${gapText}\n\n## Origem\n\nO conteúdo foi mantido conforme encontrado nos arquivos locais. Informações ausentes não foram completadas.`;
 }
