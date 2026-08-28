@@ -31,6 +31,10 @@ PDF com texto, TXT, DOCX, XLSX e XLS são lidos localmente. Imagens e PDFs sem t
 
 Não há chamada para API externa de inteligência artificial. O processamento ocorre no navegador. A versão desktop reutiliza o mesmo build local e não exige serviço remoto obrigatório.
 
+A aplicação final é independente das ferramentas usadas durante o desenvolvimento. Ela não contém chamadas para modelos de IA, APIs de IA obrigatórias, chaves ou tokens de IA, nem processamento que dependa de um serviço de IA em tempo de execução. Se as ferramentas de IA utilizadas na criação deixarem de existir, a versão publicada continuará operando com os arquivos embarcados, as dependências versionadas e o processamento local.
+
+Qualquer explicação sobre inteligência artificial, chatbots, RAG, MCP, tools, modelos, agentes ou Amazon Bedrock deve ser entendida apenas como conteúdo educativo, quando existir. A documentação diferencia claramente **conceito**, **implementação real** e **exemplo didático**. Uma simulação ou exemplo nunca é apresentado como integração real do sistema.
+
 ## Desenvolvimento
 
 ```bash
