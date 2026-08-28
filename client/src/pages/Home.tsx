@@ -1,17 +1,16 @@
 /**
- * Design: interface clean e operacional. Apenas três etapas visíveis:
- * documentos, análise e manual. Sem linguagem promocional e sem chamadas de IA.
+ * UX: uma tela, uma tarefa principal. Tipografia neutra, linguagem direta,
+ * poucos destinos e ações consistentes. Sem ilustrações, métricas decorativas
+ * ou termos técnicos desnecessários.
  */
 import { useMemo, useState } from "react";
 import {
   Check,
   ChevronRight,
-  CircleAlert,
   FileCheck2,
   FileText,
   FolderOpen,
   LockKeyhole,
-  Plus,
   Search,
   Upload,
 } from "lucide-react";
@@ -22,313 +21,234 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
-const features = [
+const items = [
   {
     name: "Cerca geográfica",
     detail: "12 evidências",
-    status: "Em revisão",
-    tone: "review",
+    status: "Revisar",
+    className: "review",
   },
   {
     name: "Consulta de alertas",
     detail: "9 evidências",
     status: "Confirmada",
-    tone: "confirmed",
+    className: "confirmed",
   },
   {
     name: "Cadastro de veículo",
     detail: "7 evidências",
-    status: "Com gap",
-    tone: "gap",
+    status: "Pendente",
+    className: "pending",
   },
 ];
 
-const navigation = [
-  { label: "Documentos", icon: FolderOpen },
-  { label: "Análise", icon: FileCheck2 },
-  { label: "Manual", icon: FileText },
-];
-
-function Status({
-  tone,
-  children,
-}: {
-  tone: string;
-  children: React.ReactNode;
-}) {
-  return <span className={`status status-${tone}`}>{children}</span>;
-}
-
 export default function Home() {
-  const [active, setActive] = useState("Análise");
-  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState("Análise");
+  const [search, setSearch] = useState("");
   const [files, setFiles] = useState([
     "Manual de operações v3.pdf",
     "Fluxo de alertas.xlsx",
   ]);
-  const [reviewDone, setReviewDone] = useState(false);
-  const filteredFeatures = useMemo(
+  const filtered = useMemo(
     () =>
-      features.filter(feature =>
-        feature.name.toLowerCase().includes(query.toLowerCase())
+      items.filter(item =>
+        item.name.toLowerCase().includes(search.toLowerCase())
       ),
-    [query]
+    [search]
   );
 
-  function notify(message: string) {
-    toast(message, {
-      description: "Esta ação será ampliada na próxima versão.",
-    });
-  }
-
-  function upload(event: React.ChangeEvent<HTMLInputElement>) {
+  const showMessage = (message: string) =>
+    toast(message, { description: "Disponível na próxima versão." });
+  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const names = Array.from(event.target.files ?? []).map(file => file.name);
     if (!names.length) return;
     setFiles(current => [...names, ...current]);
-    toast.success("Documento adicionado", {
-      description: "O arquivo permanece neste dispositivo.",
+    toast.success("Arquivo adicionado", {
+      description: "Ele ficará neste dispositivo.",
     });
-  }
+  };
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
           <img src="/manus-storage/arquivo-campo-mark_6fa76ed8.png" alt="" />
-          <div>
-            <strong>Arquivo de Campo</strong>
-            <span>Conhecimento local</span>
-          </div>
+          <strong>Arquivo de Campo</strong>
         </div>
-        <div className="project-name">
-          <span className="project-dot" /> Operação principal
+        <div className="project">
+          <span /> Operação principal
         </div>
-        <nav aria-label="Etapas do projeto" className="nav-list">
+        <nav className="nav" aria-label="Navegação principal">
           <p>PROJETO</p>
-          {navigation.map(({ label, icon: Icon }) => (
-            <button
-              key={label}
-              className={active === label ? "nav-link active" : "nav-link"}
-              onClick={() => setActive(label)}
-            >
-              <Icon size={17} />
-              <span>{label}</span>
-              {label === "Análise" && <span className="nav-number">12</span>}
-            </button>
-          ))}
+          <button
+            className={tab === "Documentos" ? "nav-item active" : "nav-item"}
+            onClick={() => setTab("Documentos")}
+          >
+            <FolderOpen size={16} /> Documentos
+          </button>
+          <button
+            className={tab === "Análise" ? "nav-item active" : "nav-item"}
+            onClick={() => setTab("Análise")}
+          >
+            <FileCheck2 size={16} /> Análise
+          </button>
+          <button
+            className={tab === "Manual" ? "nav-item active" : "nav-item"}
+            onClick={() => setTab("Manual")}
+          >
+            <FileText size={16} /> Manual
+          </button>
         </nav>
-        <div className="sidebar-footer">
-          <div className="local-status">
-            <LockKeyhole size={15} />
-            <span>Arquivos locais</span>
-            <b>Ativo</b>
-          </div>
-          <Separator />
-          <small>Versão 0.1 · protótipo</small>
+        <div className="local">
+          <LockKeyhole size={14} />
+          <span>Arquivos locais</span>
+          <b>Ativo</b>
         </div>
       </aside>
-
       <main className="main-content">
         <header className="topbar">
-          <div>
-            <span className="breadcrumb-muted">Operação principal</span>
-            <ChevronRight size={14} />
-            <strong>{active}</strong>
+          <div className="crumb">
+            <span>Operação principal</span>
+            <ChevronRight size={13} />
+            <b>{tab}</b>
           </div>
           <div className="top-actions">
             <div className="search">
               <Search size={15} />
               <Input
-                value={query}
-                onChange={event => setQuery(event.target.value)}
+                value={search}
+                onChange={event => setSearch(event.target.value)}
                 placeholder="Buscar"
-                aria-label="Buscar funcionalidade"
+                aria-label="Buscar"
               />
             </div>
-            <Button variant="outline" size="sm" onClick={() => notify("Ajuda")}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => showMessage("Ajuda")}
+            >
               Ajuda
             </Button>
           </div>
         </header>
         <div className="content">
-          <section className="page-heading">
+          <div className="heading">
             <div>
-              <p className="overline">ANÁLISE DO PROJETO</p>
+              <p className="label">ANÁLISE</p>
               <h1>Documentação do produto</h1>
-              <p>
-                Confira o que foi encontrado e revise o que ainda precisa de
-                confirmação.
-              </p>
+              <p>Revise o conteúdo encontrado nos arquivos.</p>
             </div>
-            <label className="upload">
-              <Upload size={16} /> Adicionar documento
+            <label className="primary-action">
+              <Upload size={15} /> Adicionar arquivo
               <input
                 type="file"
                 multiple
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt"
-                onChange={upload}
+                onChange={handleUpload}
               />
             </label>
-          </section>
-          <section className="stepper" aria-label="Progresso do projeto">
-            <div className="step complete">
+          </div>
+          <div className="progress-row">
+            <div className="progress-step done">
               <span>
-                <Check size={13} />
+                <Check size={12} />
               </span>
-              <div>
-                <b>Documentos</b>
-                <small>8 arquivos</small>
-              </div>
+              <b>Documentos</b>
             </div>
-            <div className="step-line complete" />
-            <div className="step current">
+            <div className="line done" />
+            <div className="progress-step current">
               <span>2</span>
-              <div>
-                <b>Análise</b>
-                <small>Em andamento</small>
-              </div>
+              <b>Análise</b>
             </div>
-            <div className="step-line" />
-            <div className="step">
+            <div className="line" />
+            <div className="progress-step">
               <span>3</span>
-              <div>
-                <b>Manual</b>
-                <small>Aguardando revisão</small>
-              </div>
+              <b>Manual</b>
             </div>
-          </section>
-          <section className="summary-grid">
+          </div>
+          <div className="layout">
             <Card>
-              <CardContent>
-                <div className="summary-icon green">
-                  <FileText size={17} />
-                </div>
-                <div>
-                  <small>Documentos</small>
-                  <strong>08</strong>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <div className="summary-icon green">
-                  <FileCheck2 size={17} />
-                </div>
-                <div>
-                  <small>Funcionalidades</small>
-                  <strong>12</strong>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <div className="summary-icon yellow">
-                  <CircleAlert size={17} />
-                </div>
-                <div>
-                  <small>Pendências</small>
-                  <strong>04</strong>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-          <section className="main-grid">
-            <Card className="feature-card">
               <CardHeader>
                 <div>
-                  <p className="overline">RESULTADO DA ANÁLISE</p>
+                  <p className="label">RESULTADO</p>
                   <CardTitle>Funcionalidades encontradas</CardTitle>
                 </div>
-                <span className="progress-label">68% concluído</span>
+                <span className="percent">68%</span>
               </CardHeader>
               <CardContent>
-                <Progress value={68} className="analysis-progress" />
-                <div className="feature-list">
-                  {filteredFeatures.map(feature => (
+                <Progress value={68} className="progress" />
+                <div className="rows">
+                  {filtered.map(item => (
                     <button
-                      className="feature-row"
-                      key={feature.name}
-                      onClick={() => notify(feature.name)}
+                      className="row"
+                      key={item.name}
+                      onClick={() => showMessage(item.name)}
                     >
-                      <div className={`feature-bar ${feature.tone}`} />
-                      <div className="feature-info">
-                        <b>{feature.name}</b>
-                        <small>{feature.detail} · origem registrada</small>
-                      </div>
-                      <Status tone={feature.tone}>{feature.status}</Status>
-                      <ChevronRight size={15} />
+                      <span className={`bar ${item.className}`} />
+                      <span className="row-text">
+                        <b>{item.name}</b>
+                        <small>{item.detail}</small>
+                      </span>
+                      <span className={`status ${item.className}`}>
+                        {item.status}
+                      </span>
+                      <ChevronRight size={14} />
                     </button>
                   ))}
-                  {!filteredFeatures.length && (
+                  {!filtered.length && (
                     <p className="empty">Nenhum resultado encontrado.</p>
                   )}
                 </div>
               </CardContent>
             </Card>
-            <Card className="docs-card">
+            <Card>
               <CardHeader>
                 <div>
-                  <p className="overline">ARQUIVOS DE ORIGEM</p>
+                  <p className="label">ARQUIVOS</p>
                   <CardTitle>Documentos</CardTitle>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Adicionar documento"
-                  onClick={() => notify("Adicionar documento")}
+                <button
+                  className="add-icon"
+                  onClick={() => showMessage("Adicionar arquivo")}
+                  aria-label="Adicionar arquivo"
                 >
-                  <Plus size={16} />
-                </Button>
+                  +
+                </button>
               </CardHeader>
               <CardContent>
-                <div className="docs-list">
+                <div className="file-list">
                   {files.slice(0, 4).map(file => (
-                    <div className="doc-row" key={file}>
-                      <div className="doc-icon">
-                        <FileText size={16} />
-                      </div>
+                    <div className="file" key={file}>
+                      <FileText size={15} />
                       <div>
                         <b>{file}</b>
                         <small>
-                          <Check size={12} /> Lido neste dispositivo
+                          <Check size={11} /> No dispositivo
                         </small>
                       </div>
                     </div>
                   ))}
                 </div>
                 <Separator />
-                <button
-                  className="text-link"
-                  onClick={() => setActive("Documentos")}
-                >
-                  Ver todos os documentos <ChevronRight size={14} />
+                <button className="link" onClick={() => setTab("Documentos")}>
+                  Ver documentos <ChevronRight size={13} />
                 </button>
               </CardContent>
             </Card>
-          </section>
-          <section className="next-step">
+          </div>
+          <div className="next">
             <div>
               <b>Próximo passo</b>
-              <p>Revise as 4 pendências antes de gerar o manual.</p>
+              <span>Revise as pendências antes de gerar o manual.</span>
             </div>
-            <Button
-              onClick={() => {
-                setActive("Manual");
-                setReviewDone(true);
-              }}
-            >
-              Abrir revisão <ChevronRight size={15} />
+            <Button onClick={() => setTab("Manual")}>
+              Abrir revisão <ChevronRight size={14} />
             </Button>
-          </section>
-          <p className="privacy-line">
-            <LockKeyhole size={14} /> Nenhum documento é enviado para serviço
-            externo. Os arquivos ficam neste dispositivo.
+          </div>
+          <p className="privacy">
+            <LockKeyhole size={13} /> Seus arquivos não são enviados para
+            serviços externos.
           </p>
-          {reviewDone && (
-            <div className="confirmation">
-              <Check size={15} /> Revisão aberta
-            </div>
-          )}
         </div>
       </main>
     </div>
