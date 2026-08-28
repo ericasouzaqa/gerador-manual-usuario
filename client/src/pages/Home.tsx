@@ -1,255 +1,126 @@
 /**
- * UX: uma tela, uma tarefa principal. Tipografia neutra, linguagem direta,
- * poucos destinos e ações consistentes. Sem ilustrações, métricas decorativas
- * ou termos técnicos desnecessários.
+ * UX mínimo: duas telas e uma ação principal. O usuário lê os arquivos,
+ * cria o manual no topo e revisa o resultado. Nada além disso aparece.
  */
-import { useMemo, useState } from "react";
-import {
-  Check,
-  ChevronRight,
-  FileCheck2,
-  FileText,
-  FolderOpen,
-  LockKeyhole,
-  Search,
-  Upload,
-} from "lucide-react";
+import { useState } from "react";
+import { BookOpen, Check, FileText, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
-const items = [
-  {
-    name: "Cerca geográfica",
-    detail: "12 evidências",
-    status: "Revisar",
-    className: "review",
-  },
-  {
-    name: "Consulta de alertas",
-    detail: "9 evidências",
-    status: "Confirmada",
-    className: "confirmed",
-  },
-  {
-    name: "Cadastro de veículo",
-    detail: "7 evidências",
-    status: "Pendente",
-    className: "pending",
-  },
-];
+const initialFiles = ["Manual de operações v3.pdf", "Fluxo de alertas.xlsx"];
 
 export default function Home() {
-  const [tab, setTab] = useState("Análise");
-  const [search, setSearch] = useState("");
-  const [files, setFiles] = useState([
-    "Manual de operações v3.pdf",
-    "Fluxo de alertas.xlsx",
-  ]);
-  const filtered = useMemo(
-    () =>
-      items.filter(item =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-      ),
-    [search]
-  );
+  const [screen, setScreen] = useState<"ler" | "manual">("ler");
+  const [files, setFiles] = useState(initialFiles);
+  const [manualCreated, setManualCreated] = useState(false);
 
-  const showMessage = (message: string) =>
-    toast(message, { description: "Disponível na próxima versão." });
-  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  function addFiles(event: React.ChangeEvent<HTMLInputElement>) {
     const names = Array.from(event.target.files ?? []).map(file => file.name);
     if (!names.length) return;
     setFiles(current => [...names, ...current]);
-    toast.success("Arquivo adicionado", {
-      description: "Ele ficará neste dispositivo.",
-    });
-  };
+    toast.success("Arquivo adicionado");
+  }
+
+  function createManual() {
+    setManualCreated(true);
+    setScreen("manual");
+  }
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <header className="topbar">
         <div className="brand">
           <img src="/manus-storage/arquivo-campo-mark_6fa76ed8.png" alt="" />
           <strong>Arquivo de Campo</strong>
         </div>
-        <div className="project">
-          <span /> Operação principal
-        </div>
-        <nav className="nav" aria-label="Navegação principal">
-          <p>PROJETO</p>
+        <nav className="tabs" aria-label="Telas">
           <button
-            className={tab === "Documentos" ? "nav-item active" : "nav-item"}
-            onClick={() => setTab("Documentos")}
+            className={screen === "ler" ? "tab active" : "tab"}
+            onClick={() => setScreen("ler")}
           >
-            <FolderOpen size={16} /> Documentos
+            Ler documentos
           </button>
           <button
-            className={tab === "Análise" ? "nav-item active" : "nav-item"}
-            onClick={() => setTab("Análise")}
+            className={screen === "manual" ? "tab active" : "tab"}
+            onClick={() => setScreen("manual")}
           >
-            <FileCheck2 size={16} /> Análise
-          </button>
-          <button
-            className={tab === "Manual" ? "nav-item active" : "nav-item"}
-            onClick={() => setTab("Manual")}
-          >
-            <FileText size={16} /> Manual
+            Manual
           </button>
         </nav>
-        <div className="local">
-          <LockKeyhole size={14} />
-          <span>Arquivos locais</span>
-          <b>Ativo</b>
-        </div>
-      </aside>
-      <main className="main-content">
-        <header className="topbar">
-          <div className="crumb">
-            <span>Operação principal</span>
-            <ChevronRight size={13} />
-            <b>{tab}</b>
-          </div>
-          <div className="top-actions">
-            <div className="search">
-              <Search size={15} />
-              <Input
-                value={search}
-                onChange={event => setSearch(event.target.value)}
-                placeholder="Buscar"
-                aria-label="Buscar"
+        <Button className="create-button" onClick={createManual}>
+          <Plus size={15} /> Criar manual
+        </Button>
+      </header>
+
+      <main className="page">
+        {screen === "ler" ? (
+          <section className="screen">
+            <div className="screen-heading">
+              <div>
+                <h1>Ler documentos</h1>
+                <p>Adicione os arquivos que devem ser usados no manual.</p>
+              </div>
+              <label className="upload-button">
+                <Upload size={15} /> Adicionar arquivo
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt"
+                  onChange={addFiles}
+                />
+              </label>
+            </div>
+            <div className="file-panel">
+              {files.map(file => (
+                <div className="file-row" key={file}>
+                  <div className="file-symbol">
+                    <FileText size={17} />
+                  </div>
+                  <div>
+                    <strong>{file}</strong>
+                    <span>
+                      <Check size={12} /> Arquivo disponível neste dispositivo
+                    </span>
+                  </div>
+                </div>
+              ))}
+              <Separator />
+              <p className="read-status">
+                <span /> {files.length} arquivos prontos para leitura
+              </p>
+            </div>
+          </section>
+        ) : (
+          <section className="screen manual-screen">
+            <div className="screen-heading">
+              <div>
+                <h1>Manual</h1>
+                <p>Revise o conteúdo antes de usar.</p>
+              </div>
+            </div>
+            <article className="manual">
+              <p className="manual-label">MANUAL DE OPERAÇÃO</p>
+              <h2>
+                {manualCreated
+                  ? "Manual criado a partir dos documentos"
+                  : "Manual em branco"}
+              </h2>
+              <label htmlFor="manual-content">Conteúdo</label>
+              <textarea
+                id="manual-content"
+                defaultValue={
+                  manualCreated
+                    ? "O que é?\n\nDescreva a funcionalidade com base nos documentos lidos.\n\nComo utilizar\n\n1. Consulte os documentos de origem.\n2. Revise as informações encontradas.\n3. Ajuste este conteúdo antes de finalizar."
+                    : "Escreva o conteúdo do manual aqui."
+                }
               />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => showMessage("Ajuda")}
-            >
-              Ajuda
-            </Button>
-          </div>
-        </header>
-        <div className="content">
-          <div className="heading">
-            <div>
-              <p className="label">ANÁLISE</p>
-              <h1>Documentação do produto</h1>
-              <p>Revise o conteúdo encontrado nos arquivos.</p>
-            </div>
-            <label className="primary-action">
-              <Upload size={15} /> Adicionar arquivo
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt"
-                onChange={handleUpload}
-              />
-            </label>
-          </div>
-          <div className="progress-row">
-            <div className="progress-step done">
-              <span>
-                <Check size={12} />
-              </span>
-              <b>Documentos</b>
-            </div>
-            <div className="line done" />
-            <div className="progress-step current">
-              <span>2</span>
-              <b>Análise</b>
-            </div>
-            <div className="line" />
-            <div className="progress-step">
-              <span>3</span>
-              <b>Manual</b>
-            </div>
-          </div>
-          <div className="layout">
-            <Card>
-              <CardHeader>
-                <div>
-                  <p className="label">RESULTADO</p>
-                  <CardTitle>Funcionalidades encontradas</CardTitle>
-                </div>
-                <span className="percent">68%</span>
-              </CardHeader>
-              <CardContent>
-                <Progress value={68} className="progress" />
-                <div className="rows">
-                  {filtered.map(item => (
-                    <button
-                      className="row"
-                      key={item.name}
-                      onClick={() => showMessage(item.name)}
-                    >
-                      <span className={`bar ${item.className}`} />
-                      <span className="row-text">
-                        <b>{item.name}</b>
-                        <small>{item.detail}</small>
-                      </span>
-                      <span className={`status ${item.className}`}>
-                        {item.status}
-                      </span>
-                      <ChevronRight size={14} />
-                    </button>
-                  ))}
-                  {!filtered.length && (
-                    <p className="empty">Nenhum resultado encontrado.</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <div>
-                  <p className="label">ARQUIVOS</p>
-                  <CardTitle>Documentos</CardTitle>
-                </div>
-                <button
-                  className="add-icon"
-                  onClick={() => showMessage("Adicionar arquivo")}
-                  aria-label="Adicionar arquivo"
-                >
-                  +
-                </button>
-              </CardHeader>
-              <CardContent>
-                <div className="file-list">
-                  {files.slice(0, 4).map(file => (
-                    <div className="file" key={file}>
-                      <FileText size={15} />
-                      <div>
-                        <b>{file}</b>
-                        <small>
-                          <Check size={11} /> No dispositivo
-                        </small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Separator />
-                <button className="link" onClick={() => setTab("Documentos")}>
-                  Ver documentos <ChevronRight size={13} />
-                </button>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="next">
-            <div>
-              <b>Próximo passo</b>
-              <span>Revise as pendências antes de gerar o manual.</span>
-            </div>
-            <Button onClick={() => setTab("Manual")}>
-              Abrir revisão <ChevronRight size={14} />
-            </Button>
-          </div>
-          <p className="privacy">
-            <LockKeyhole size={13} /> Seus arquivos não são enviados para
-            serviços externos.
-          </p>
-        </div>
+              <p className="manual-note">
+                O conteúdo pode ser editado antes da versão final.
+              </p>
+            </article>
+          </section>
+        )}
       </main>
     </div>
   );
