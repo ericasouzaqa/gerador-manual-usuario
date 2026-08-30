@@ -17,8 +17,10 @@ export type SourceDocument = {
   id: string;
   name: string;
   format: string;
-  status: "lido" | "parcial" | "erro";
+  status: "lido" | "parcial" | "visual" | "não suportado" | "erro";
   rawText: string;
+  /** Alias textual para consumidores legados; o fluxo principal usa rawText. */
+  text: string;
   evidence: Evidence[];
   previewUrl?: string;
   message?: string;

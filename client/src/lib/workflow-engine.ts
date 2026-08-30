@@ -15,7 +15,7 @@ export type ReadResult = {
   id: string;
   name: string;
   format: string;
-  status: "lido" | "parcial" | "erro";
+  status: "lido" | "parcial" | "visual" | "não suportado" | "erro";
   rawText: string;
   evidence: Evidence[];
   message?: string;

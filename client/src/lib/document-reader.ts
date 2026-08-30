@@ -88,6 +88,7 @@ function buildSource(
     format,
     status: text.trim() ? "lido" : "parcial",
     rawText: text,
+    text,
     evidence,
     previewUrl:
       file.type.startsWith("image/") &&
@@ -133,8 +134,9 @@ export async function readDocument(file: File): Promise<SourceDocument> {
         id,
         name: file.name,
         format,
-        status: "parcial",
+        status: "visual",
         rawText: "",
+        text: "",
         evidence: [],
         previewUrl:
           typeof URL.createObjectURL === "function"
@@ -147,8 +149,9 @@ export async function readDocument(file: File): Promise<SourceDocument> {
       id,
       name: file.name,
       format,
-      status: "erro",
+      status: "não suportado",
       rawText: "",
+      text: "",
       evidence: [],
       message: "Formato não suportado.",
     };
@@ -159,8 +162,23 @@ export async function readDocument(file: File): Promise<SourceDocument> {
       format,
       status: "erro",
       rawText: "",
+      text: "",
       evidence: [],
       message: "Falha na leitura local. O arquivo não foi interpretado.",
     };
   }
+}
+
+
+/** Compatibilidade para consumidores antigos; o fluxo principal usa workflow-engine. */
+export function createManual(
+  documents: Array<{ name: string; text?: string; rawText?: string }>
+) {
+  const sections = documents
+    .map(
+      document =>
+        `## ${document.name}\n\nFonte: ${document.name}\n\n${document.text ?? document.rawText ?? ""}`
+    )
+    .join("\n\n");
+  return `# Manual do Usuário\n\nFontes utilizadas: ${documents.map(document => document.name).join(", ") || "nenhum documento"}.\n\n${sections}\n\nInformações ausentes não foram completadas e devem permanecer como GAP.`;
 }
